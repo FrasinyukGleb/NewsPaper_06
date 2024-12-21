@@ -1,0 +1,66 @@
+
+1. Искользовать в терминале в папке NewsPaper/
+python manage.py makemigrations
+python manage.py migrate
+python manage.py shell
+
+2. Использовать в Django shell
+
+from django.contrib.auth.models import User
+from news.models import Author, Category, Post, Comment
+
+2.1 Создание пользователей:
+user1 = User.objects.create_user('Иванов Иван Иванович')
+user2 = User.objects.create_user('Петров Петр Петрович')
+
+2.2 Создание авторов, связанных с пользователями
+author1 = Author.objects.create(user=user1)
+author2 = Author.objects.create(user=user2)
+
+2.3 Добавление категорий
+sport = Category.objects.create(name='Спорт')
+politics = Category.objects.create(name='Политика')
+culture = Category.objects.create(name='Культура')
+economics = Category.objects.create(name='Экономика')
+
+2.4 Добавление статьи и новость:
+
+post1 = Post.objects.create(author=author1, title='Порядок уплаты налога гражданами - самозанятыми, применяющим спецрежим НДП', text='Гражданам, применяющим спецрежим НПД, следует использовать приложение "Мой налог".Не позднее 12-го числа каждого месяца в приложении "Мой налог" появляется уведомление о начисленном налоге за предыдущий период. Его размер определяется автоматически и зависит от внесенных в приложение чеков. Так, если услуги оказывались гражданам, то НПД составит 4% от полученных доходов, а если организациям или предпринимателям – 6%')
+
+post2 = Post.objects.create(author=author2, title='«Вечер современной хореографии» во МГИК | КАК ЭТО БЫЛО', text='В Московском государственном институте культуры, 8 ноября 2024 года, прошёл «Вечер современной хореографии», посвящённый 25-летию кафедры современной хореографии хореографического факультета МГИК. Более 400 обучающихся и гостей мероприятия поздравили с праздником любимую кафедру, которая реализует подготовку бакалавров в области современного хореографического искусства с 1999 года.')
+
+news1 = Post.objects.create(author=author1, title='Синнер выиграл Итоговый турнир ATP', text='Итальянский теннисист Янник Синнер стал победителем Итогового турнира ATP — 2024. На счету Фрица восемь эйсов, две двойные ошибки и один заработанный брейк-пойнт.', type='news')
+
+2.5 Присовение категорий
+post1.category.add(economics, politics)
+post2.category.add(culture)
+news1.category.add(sport)
+
+2.6 Создание комментариев
+comment1 = Comment.objects.create(post=post1, user=author1.user, text='Интересная статья. Очень полезная!')
+comment2 = Comment.objects.create(post=post1, user=author2.user, text='Очень позначательно!')
+comment3 = Comment.objects.create(post=post2, user=author1.user, text='Скукотища! Не интересно!')
+comment4 = Comment.objects.create(post=news1, user=author2.user, text='Вау! Очень рад за него!')
+
+2.7 Функции like() и dislike()
+post1.like()
+post2.dislike()
+comment4.like()
+comment3.dislike()
+
+2.8 Обновление рейтинга пользователей
+author1.update_rating()
+author2.update_rating()
+
+2.9 Выводим username и рейтинг лучшего пользователя
+best_user = Author.objects.all().order_by('-rating').first()
+print(f"Лучший пользователь: {best_user.user.username}, рейтинг: {best_user.rating}")
+
+2.10 Выводим информацию о лучшей статье
+best_post = Post.objects.filter(type='article').order_by('-rating').first()
+print(f"Лучшая статья:\nДата добавления: {best_post.date_add}\nАвтор: {best_post.author.user.username}\nРейтинг: {best_post.rating}\nЗаголовок: {best_post.title}\nПревью: {best_post.preview()}")
+
+2.11 Выводим все комментарии к лучшей статье
+comments_to_best_post = Comment.objects.filter(post=best_post)
+for comment in comments_to_best_post:
+    print(f"Дата: {comment.date_add}, Пользователь: {comment.user.username}, Рейтинг: {comment.rating}, Текст: {comment.text}")

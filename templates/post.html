@@ -1,0 +1,42 @@
+{% extends 'flatpages/default.html' %}
+
+{% load my_filters %}
+
+{% block title %}
+Post
+{% endblock title %}
+
+{% block content %}
+<div>
+    <h1>{{ post.title|censor }}</h1>
+    <p>{{ post.date_add|date:'M d Y' }}</p>
+    <p>{{ post.text|censor }}</p>
+    <hr>
+    <p>Автор: {{ post.author }}</p>
+    <p>Тип публикации: {{ post.get_type_display }}</p>
+    <p>Рейтинг: {{ post.rating }}</p>
+</div>
+
+{% if user.is_authenticated %}
+    {% for category in post.category.all %}
+        <div>
+            {% if user in category.subscribers.all %}
+                <p>Вы подписаны на категорию {{ category.name }}</p>
+            {% else %}
+                <form method="post" action="{% url 'subscribe_to_category' category.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Подписаться на категорию: {{ category.name }}</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<hr>
+<tr>
+   <td><a href="{{ post.type }}/{{ post.id }}/delete">Удалить</a></td>
+   <td><a href="{{ post.type }}/{{ post.id }}/edit">Изменить</a></td>
+   <td><a href="/news/">Назад</a></td>
+</tr>
+
+{% endblock content %}
