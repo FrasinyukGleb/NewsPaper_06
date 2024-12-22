@@ -61,20 +61,7 @@ class PostCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         else:
             post.type = 'news'
         post.save()
-
-
-        categories = form.cleaned_data['category']
-        for category in categories:
-            PostCategory.objects.create(post=post, category=category)
-
-        # Отправка уведомлений
-        # Собираем все email подписчиков
-        subscribers = set()
-        for category in post.category.all():
-            for user in category.subscribers.all():
-                subscribers.add(user)
-
-        send_post_notification(post, subscribers)
+        send_post_notification.delay(post.pk)
 
         return super().form_valid(form)
 

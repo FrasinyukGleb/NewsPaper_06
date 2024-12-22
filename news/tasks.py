@@ -5,35 +5,41 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-
-from .models import Post, Category
+from .models import Post, Category, PostCategory
 
 import logging
 logger = logging.getLogger(__name__)
 
 @shared_task
-def send_post_notification(post, subscribers):
-    pass
-    for user in subscribers:
-        # Получаем наш html с учетом пользователя
-        html_content = render_to_string(
-            'post_created.html',
-            {
-                'post': post,
-                'user': user,
-            }
-        )
+def send_post_notification(pk):
+    post = Post.objects.get(pk=pk)
+    categories = post.category.all()
+    subscribers_emails = []
 
-        # Отправка письма
-        msg = EmailMultiAlternatives(
-            subject=f'{post.title} | {post.date_add.strftime("%Y-%m-%d")}',
-            body=post.text,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email],
-        )
-        msg.attach_alternative(html_content, "text/html")  # добавляем html
-        print(f'DEBUG: Sended email - {user.email}')
-        msg.send()  # отсылаем
+    for cat in categories:
+        subscribers = cat.subscribers.all()
+        subscribers_emails += [s.email for s in subscribers]
+
+
+    html_content = render_to_string(
+        'post_created_celery.html',
+        {
+            'text': post.preview,
+            'link': f'http://127.0.0.1:8000/news/{pk}',
+
+        }
+    )
+
+    msg = EmailMultiAlternatives(
+        subject=post.title,
+        body='',
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=subscribers_emails,
+    )
+
+    msg.attach_alternative(html_content, 'text/html')
+    msg.send()
+
 
 
 @shared_task
